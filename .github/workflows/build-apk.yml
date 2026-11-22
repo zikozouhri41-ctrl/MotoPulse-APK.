@@ -1,0 +1,44 @@
+
+name: Build MotoPulse APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout builder files
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Extract MotoPulse source
+        run: unzip MotoPulse_v0.5_expanded_catalog.zip -d source
+
+      - name: Generate Android project files
+        working-directory: source/MotoPulse
+        run: flutter create . --platforms=android --org com.motopulse
+
+      - name: Get dependencies
+        working-directory: source/MotoPulse
+        run: flutter pub get
+
+      - name: Build release APK
+        working-directory: source/MotoPulse
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MotoPulse-Android-APK
+          path: source/MotoPulse/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          
